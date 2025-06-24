@@ -1,10 +1,14 @@
 import React from 'react'
 import axios from 'axios'
 
+
+const BASE_URL = import.meta.env.MODE === "development" 
+  ? "http://localhost:5001/api" 
+  : "/api";
 // This is a placeholder component for axios, which is not used directly in the UI.
 // It is typically used for making HTTP requests in the application.
 const api = axios.create({
-    baseURL: "http://localhost:5001/api"
+    baseURL: BASE_URL,
 });
 
 

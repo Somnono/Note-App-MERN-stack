@@ -3,6 +3,7 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
+import path from "path";
 
 // and the local modules for handling notes routes, database connection, and rate limiting middleware.
 import notesRoutes from "./routes/notesRoutes.js";
@@ -15,14 +16,26 @@ import rateLimiter from "./middleware/rateLimiter.js";
 
 const app = express();
 const PORT = process.env.PORT || 5001;
+const __dirname = path.resolve();
 
 // These lines are the middleware setup for the Express application.
-app.use(cors());
+if(process.env.NODE__ENV !=="production") {
+  app.use(cors());
+}
 app.use(express.json());
 // This line allows the Express app to parse incoming JSON requests, enabling it to handle JSON data in request bodies.
 app.use(rateLimiter);
 app.use("/api/notes", notesRoutes);
 
+
+
+if (process.env.NODE_ENV === "production") {
+  app.use(express.static(path.join(__dirname, "../frontend/dist")));
+// This line serves static files from the "build" directory of the frontend application, allowing the)));
+  app.get("*", (req, res) => {
+    res.sendFile(path.join(__dirname, "../frontend","dist","index.html"));
+  });
+}
 // This line mounts the notesRoutes on the "/api/notes" path, meaning that any requests to this path will be handled by the notesRoutes. 
 
 connectDB().then(() => {
