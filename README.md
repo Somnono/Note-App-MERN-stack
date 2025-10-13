@@ -1,5 +1,11 @@
 📝 MERN Note App
 
+![License](https://img.shields.io/badge/License-MIT-green.svg)
+![Stack](https://img.shields.io/badge/Stack-MERN-blue.svg)
+![Status](https://img.shields.io/badge/Status-Active-success.svg)
+![Contributions](https://img.shields.io/badge/Contributions-Welcome-brightgreen.svg)
+
+
 A simple cloud-based note-taking application built with the MERN stack.
 Users can create, edit, and delete notes with a clean, responsive UI — accessible from any device.
 
