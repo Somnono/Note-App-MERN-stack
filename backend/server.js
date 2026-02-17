@@ -1,48 +1,67 @@
-//These are the package imports for the backend server.
-// They include Express for building the server, CORS for handling cross-origin requests,
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import path from "path";
 
-// and the local modules for handling notes routes, database connection, and rate limiting middleware.
 import notesRoutes from "./routes/notesRoutes.js";
 import { connectDB } from "./config/db.js";
 import rateLimiter from "./middleware/rateLimiter.js";
 
-// This code imports the necessary modules and sets up an Express server with routes for handling notes.
-
- dotenv.config();
+dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 5001;
 const __dirname = path.resolve();
 
-// These lines are the middleware setup for the Express application.
-if(process.env.NODE__ENV !=="production") {
-  app.use(cors());
-}
+/**
+ * CORS
+ * - In production, you can restrict to your frontend domain later.
+ * - For now, keep it simple so you can showcase without surprises.
+ */
+app.use(
+  cors({
+    origin: true,
+    credentials: true,
+  })
+);
+
 app.use(express.json());
-// This line allows the Express app to parse incoming JSON requests, enabling it to handle JSON data in request bodies.
-app.use(rateLimiter);
+
+/**
+ * Rate limiter
+ * If the middleware throws due to missing env (Upstash vars), we don't want the whole server to crash
+ * while you're trying to demo. We'll fail-soft and still run.
+ */
+try {
+  if (typeof rateLimiter === "function") {
+    app.use(rateLimiter);
+  }
+} catch (e) {
+  console.error("⚠️ Rate limiter disabled (startup error):", e?.message || e);
+}
+
 app.use("/api/notes", notesRoutes);
 
+// Health check (helps with Render + debugging)
+app.get("/health", (req, res) => res.status(200).json({ ok: true }));
 
-
+// Serve frontend in production if you build frontend into /frontend/dist
 if (process.env.NODE_ENV === "production") {
   app.use(express.static(path.join(__dirname, "../frontend/dist")));
-// This line serves static files from the "build" directory of the frontend application, allowing the)));
+
   app.get("*", (req, res) => {
-    res.sendFile(path.join(__dirname, "../frontend","dist","index.html"));
+    res.sendFile(path.join(__dirname, "../frontend", "dist", "index.html"));
   });
 }
-// This line mounts the notesRoutes on the "/api/notes" path, meaning that any requests to this path will be handled by the notesRoutes. 
 
-connectDB().then(() => {
-  app.listen(PORT, () => {
-  console.log("Sever is running from Backend, we online:", PORT);
-});
-});
-// This code creates an Express application and starts a server listening on port 5001. 
-// It also connects to a MongoDB database using the connectDB function from the config/db.js file.
-// The server is set up to handle JSON requests and uses a rate limiter middleware to limit the number of requests to the API.
+connectDB()
+  .then(() => {
+    app.listen(PORT, () => {
+      console.log(`🚀 Server running on port ${PORT}`);
+    });
+  })
+  .catch((err) => {
+    console.error("❌ MongoDB connection failed:", err);
+    // On Render, crash clearly if DB is required
+    process.exit(1);
+  });
